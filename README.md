@@ -6,39 +6,18 @@
 
 - 文本检测：使用PaddleOCR的PP-OCRv5模型进行文本区域检测
 - 文本识别：使用MangaOCR模型进行文本内容识别
-- REST API：提供简洁的HTTP接口
-- 异步处理：基于FastAPI的异步请求处理
-- 图片下载：支持通过URL下载和处理图片
 
 ## 模型说明
 
 ### PaddleOCR模型
 基于PP-OCRv5_mobile_det根据数据集Manga109-s进行微调，在测试集上对文本区域检测的准确率为85%。
 
+**模型存储**：文本检测模型（PP-OCRv5_mobile_det）已存储在本仓库中，位于 `models/detector/PP-OCRv5_mobile_det/` 目录，无需额外下载。
+
 ### MangaOCR模型
 本项目使用的MangaOCR模型来自开源项目 [kha-white/manga-ocr](https://github.com/kha-white/manga-ocr)。
 
-**项目简介**：
-MangaOCR是一个专门用于日语文本识别的OCR工具，主要针对日本漫画场景进行了优化。它使用基于Transformers的Vision Encoder Decoder框架构建的自定义端到端模型。
-
-**主要特性**：
-- 支持垂直和水平文本识别
-- 能够处理带有振假名（furigana）的文本
-- 支持文本叠加在图像上的场景
-- 对各种字体和字体样式具有良好的适应性
-- 能够处理低质量图像
-- 支持在单次前向传播中识别多行文本，无需将文本气泡分割成多行
-
-**适用场景**：
-- 日本漫画文本识别
-- 日语印刷文本识别（如小说、游戏等）
-- 各种印刷日语文本的通用OCR
-
-**模型信息**：
-- 模型名称：manga-ocr-base
-- 开源地址：https://github.com/kha-white/manga-ocr
-- 模型大小：约400MB
-- 首次运行时会自动下载模型文件
+模型下载与部署请参考：https://github.com/kha-white/manga-ocr
 
 ## 技术栈
 
@@ -47,17 +26,6 @@ MangaOCR是一个专门用于日语文本识别的OCR工具，主要针对日本
 - **图像处理**: Pillow, OpenCV
 - **深度学习**: PyTorch, PaddlePaddle
 - **HTTP客户端**: httpx
-
-## 项目结构
-
-```
-paddle_ocr/
-├── main.py           # 主程序入口
-├── config.py         # 配置文件
-├── requirements.txt  # 依赖包列表
-├── .gitignore       # Git忽略文件
-└── README.md        # 项目说明
-```
 
 ## 安装说明
 
@@ -81,22 +49,46 @@ conda activate paddle_ocr
 pip install -r requirements.txt
 ```
 
-4. 下载模型文件：
-- 文本检测模型：PP-OCRv5_mobile_det
-- OCR识别模型：manga-ocr-base
+4. 模型文件说明：
+- 文本检测模型：PP-OCRv5_mobile_det（已包含在仓库中，位于 `models/detector/PP-OCRv5_mobile_det/`）
+- OCR识别模型：manga-ocr-base（需自行下载，参考：https://github.com/kha-white/manga-ocr）
 
-将模型文件放置在对应的目录中：
-```
-models/
-├── detector/
-│   └── PP-OCRv5_mobile_det/
-└── ocr/
-    └── manga_ocr/
-```
+将下载的MangaOCR模型文件放置在 `models/ocr/manga_ocr/` 目录中。
 
 ## 使用方法
 
-### 启动服务
+### Web演示界面
+
+本项目提供了一个基于Web的交互式演示界面 `web_demo.py`，支持上传图片并实时显示OCR识别结果。
+
+**功能特性**：
+- 支持图片上传
+- 自动检测文本区域
+- 识别文本内容
+- 在原图上绘制文本框和识别结果
+- 使用不同颜色区分不同的文本区域
+
+**启动方式**：
+
+```bash
+python web_demo.py
+```
+
+启动后访问 `http://127.0.0.1:8000` 即可使用Web演示界面。
+
+**使用步骤**：
+1. 在浏览器中打开 `http://127.0.0.1:8000`
+2. 点击上传按钮选择图片
+3. 等待处理完成
+4. 查看带有文本标注的识别结果
+
+### 演示效果图
+
+![demo](docs/demo.png)
+
+### API服务
+
+#### 启动服务
 
 ```bash
 uvicorn main:app --host 0.0.0.0 --port 8000
@@ -207,10 +199,11 @@ OCR_MODEL_DEVICE = "cpu"  # 可选: "cpu" 或 "cuda"
 
 ## 注意事项
 
-1. 首次运行时需要下载模型文件，可能需要较长时间
-2. 图片URL需要是可公开访问的地址
-3. 建议使用GPU加速以提高处理速度
-4. 确保网络连接正常，用于下载图片和模型
+1. 文本检测模型已包含在仓库中，可直接使用
+2. MangaOCR模型需自行下载，请参考 https://github.com/kha-white/manga-ocr
+3. 图片URL需要是可公开访问的地址
+4. 建议使用GPU加速以提高处理速度
+5. 确保网络连接正常，用于下载图片和模型
 
 ## 许可证
 
