@@ -51,11 +51,11 @@ data/
 datasets/
 *.jpg
 *.jpeg
-*.png
 *.gif
 *.bmp
 *.tiff
 *.webp
+
 
 # Cache
 .cache/
