@@ -39,15 +39,8 @@ venv.bak/
 Thumbs.db
 
 # Models
-models/
-!models/detector/PP-OCRv5_mobile_det/
-*.pth
-*.pt
-*.onnx
-*.pdparams
-*.pdiparams
-*.pdiparams.info
-*.pdmodel
+models/ocr/
+
 
 # Logs
 *.log
