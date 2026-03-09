@@ -84,7 +84,8 @@ python web_demo.py
 
 ### 演示效果图
 
-![demo](docs/demo.png)
+![demo](docs/demo1.png)
+![demo](docs/demo2.png)
 
 ### API服务
 

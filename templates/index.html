@@ -153,6 +153,52 @@
         .instructions li {
             margin: 8px 0;
         }
+        .results-section {
+            display: none;
+            margin-top: 30px;
+        }
+        .results-section.active {
+            display: block;
+        }
+        .results-container {
+            background: #f8f9ff;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .results-container h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+        .result-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        .result-number {
+            flex-shrink: 0;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            margin-right: 15px;
+        }
+        .result-text {
+            flex: 1;
+            color: #333;
+            font-size: 16px;
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body>
@@ -198,6 +244,13 @@
                 </div>
             </div>
         </div>
+
+        <div class="results-section" id="resultsSection">
+            <div class="results-container">
+                <h3>📝 识别结果</h3>
+                <div id="resultsList"></div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -206,9 +259,11 @@
         const uploadBtn = document.getElementById('uploadBtn');
         const loading = document.getElementById('loading');
         const previewSection = document.getElementById('previewSection');
+        const resultsSection = document.getElementById('resultsSection');
         const originalImage = document.getElementById('originalImage');
         const resultImage = document.getElementById('resultImage');
         const errorMessage = document.getElementById('errorMessage');
+        const resultsList = document.getElementById('resultsList');
 
         uploadSection.addEventListener('dragover', (e) => {
             e.preventDefault();
@@ -243,10 +298,8 @@
             hideError();
             loading.classList.add('active');
             previewSection.classList.remove('active');
+            resultsSection.classList.remove('active');
             uploadBtn.disabled = true;
-
-            const originalUrl = URL.createObjectURL(file);
-            originalImage.src = originalUrl;
 
             try {
                 const formData = new FormData();
@@ -261,17 +314,46 @@
                     throw new Error('处理失败');
                 }
 
-                const blob = await response.blob();
-                const resultUrl = URL.createObjectURL(blob);
-                resultImage.src = resultUrl;
+                const data = await response.json();
+                
+                originalImage.src = 'data:image/png;base64,' + data.original_image;
+                resultImage.src = 'data:image/png;base64,' + data.result_image;
+                
+                displayResults(data.results);
 
                 previewSection.classList.add('active');
+                resultsSection.classList.add('active');
             } catch (error) {
                 showError('处理图片时出错：' + error.message);
             } finally {
                 loading.classList.remove('active');
                 uploadBtn.disabled = false;
             }
+        }
+
+        function displayResults(results) {
+            resultsList.innerHTML = '';
+            
+            results.forEach(result => {
+                const color = `rgb(${result.color[0]}, ${result.color[1]}, ${result.color[2]})`;
+                
+                const resultItem = document.createElement('div');
+                resultItem.className = 'result-item';
+                
+                const numberDiv = document.createElement('div');
+                numberDiv.className = 'result-number';
+                numberDiv.style.backgroundColor = color;
+                numberDiv.textContent = result.index;
+                
+                const textDiv = document.createElement('div');
+                textDiv.className = 'result-text';
+                textDiv.textContent = result.text;
+                
+                resultItem.appendChild(numberDiv);
+                resultItem.appendChild(textDiv);
+                
+                resultsList.appendChild(resultItem);
+            });
         }
 
         function showError(message) {

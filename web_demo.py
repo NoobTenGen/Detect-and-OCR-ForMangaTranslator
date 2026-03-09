@@ -1,10 +1,11 @@
 import io
 import os
+import base64
 os.environ['FLAGS_use_onednn'] = '0'
 os.environ['FLAGS_use_onednn_v2'] = '0'
 import numpy as np
 from fastapi import FastAPI, UploadFile, File, HTTPException
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi import Request
@@ -85,7 +86,7 @@ async def process_image(file: UploadFile = File(...)):
         
         for font_name in japanese_fonts:
             try:
-                font = ImageFont.truetype(font_name, 28)
+                font = ImageFont.truetype(font_name, 32)
                 break
             except:
                 continue
@@ -94,37 +95,17 @@ async def process_image(file: UploadFile = File(...)):
             font = ImageFont.load_default()
         
         colors = [
-            (139, 0, 0),      # 深红色
-            (0, 0, 139),      # 深蓝色
-            (0, 100, 0),      # 深绿色
-            (184, 134, 11),   # 深橙色
-            (75, 0, 130),     # 深紫色
-            (0, 139, 139),    # 深青色
-            (139, 0, 139),    # 深洋红色
-            (184, 134, 11)    # 深黄色
+            (139, 0, 0),
+            (0, 0, 139),
+            (0, 100, 0),
+            (184, 134, 11),
+            (75, 0, 130),
+            (0, 139, 139),
+            (139, 0, 139),
+            (184, 134, 11)
         ]
         
-        def wrap_text(text, font, max_width):
-            lines = []
-            current_line = ""
-            
-            for char in text:
-                test_line = current_line + char
-                bbox = draw.textbbox((0, 0), test_line, font=font)
-                text_width = bbox[2] - bbox[0]
-                
-                if text_width <= max_width:
-                    current_line = test_line
-                else:
-                    if current_line:
-                        lines.append(current_line)
-                    current_line = char
-            
-            if current_line:
-                lines.append(current_line)
-            
-            return lines
-        
+        results = []
         for idx, poly_text in enumerate(poly_texts):
             poly = poly_text['poly']
             text = poly_text['text']
@@ -137,19 +118,45 @@ async def process_image(file: UploadFile = File(...)):
                 left = min(x_coords)
                 right = max(x_coords)
                 top = min(y_coords)
-                box_width = right - left
+                bottom = max(y_coords)
                 
-                lines = wrap_text(text, font, box_width)
-                line_height = 32
+                center_x = (left + right) / 2
+                center_y = (top + bottom) / 2
                 
-                for line_idx, line in enumerate(lines):
-                    draw.text((left, top - (len(lines) - line_idx) * line_height - 5), line, fill=color, font=font)
+                circle_radius = 20
+                draw.ellipse([center_x - circle_radius, center_y - circle_radius, 
+                             center_x + circle_radius, center_y + circle_radius], 
+                            fill=color, outline=color)
+                
+                text_bbox = draw.textbbox((0, 0), str(idx + 1), font=font)
+                text_width = text_bbox[2] - text_bbox[0]
+                text_height = text_bbox[3] - text_bbox[1]
+                text_x = center_x - text_width / 2
+                text_y = center_y - text_height / 2
+                draw.text((text_x, text_y), str(idx + 1), fill=(255, 255, 255), font=font)
+                
+                results.append({
+                    'index': idx + 1,
+                    'poly': poly,
+                    'text': text,
+                    'color': color
+                })
         
         img_byte_arr = io.BytesIO()
         img_draw.save(img_byte_arr, format='PNG')
         img_byte_arr.seek(0)
+        result_image_base64 = base64.b64encode(img_byte_arr.getvalue()).decode('utf-8')
         
-        return StreamingResponse(img_byte_arr, media_type="image/png")
+        original_byte_arr = io.BytesIO()
+        img.save(original_byte_arr, format='PNG')
+        original_byte_arr.seek(0)
+        original_image_base64 = base64.b64encode(original_byte_arr.getvalue()).decode('utf-8')
+        
+        return JSONResponse({
+            'original_image': original_image_base64,
+            'result_image': result_image_base64,
+            'results': results
+        })
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
