@@ -1,4 +1,4 @@
-# Paddle OCR Service
+# Detect-and-OCR-ForMangaTranslator
 
 基于FastAPI的OCR文本检测与识别服务，集成了PaddleOCR和MangaOCR模型，提供文本检测和识别的REST API接口。
 
